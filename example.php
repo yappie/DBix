@@ -2,9 +2,10 @@
 
 require 'DBix.php';
 
-function mysql_pass() { return file_get_contents('/home/http/my.cnf'); }
-
+# Replace this with your connection string
+function mysql_pass() { return trim(file_get_contents('/home/http/my.cnf')); }
 $db = new DBix\Connection('mysql://root:'.mysql_pass().'@localhost/test1');
+
 $db->verbose = true;
 
 # Low-level

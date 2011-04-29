@@ -106,6 +106,20 @@ class DBAL {
         return $this->execute($sql, $values);
     }
 
+    public function delete_where($table, $where) {
+        if(!$table) throw new Exception ('Needs table');
+        list($where_holders,  $where_keys_values) = $this->k_eq_q($where);
+
+        $values = array_merge(
+            (array)$table,
+            $where_keys_values
+            );
+
+        $sql = 'DELETE FROM `?` '.
+            'WHERE '.join(' AND ', $where_holders);
+        return $this->execute($sql, $values);
+    }
+
     public static function check_symbols($syms, $def, $exc) {
         if(!preg_match('#^[' . $syms . ']+$#is', $def))
                 throw new Exception($exc);
@@ -183,6 +197,7 @@ class DBAL {
 }
 
 class Query {
+    private $_affected, $_num_rows;
     public function __construct($query, $params = null) {
         $params = lazy_params($params, func_get_args());
         $this->query = $this->sql_query($query, $params);
@@ -194,12 +209,16 @@ class Query {
         return $this->query;
     }
 
+    public function last_id() {
+        return $this->db->query('SELECT LAST_INSERT_ID()')->fetch_cell();
+    }
+
     public function affected() {
-        return @mysql_affected_rows();
+        return $this->_affected;
     }
 
     public function num_rows() {
-        return @mysql_num_rows($this->rq);
+        return $this->_num_rows;
     }
 
     private function sql_query($query, $params = null) {
@@ -248,6 +267,9 @@ class Query {
                 color: silver; padding: 5px; margin-bottom:
                 10px;'>%s<br>Affected %d; num_rows: %d</div>",
                     $this->get_sql(), $this->affected(), $this->num_rows());
+
+            $this->_affected = @mysql_affected_rows();
+            $this->_num_rows = @mysql_num_rows($this->rq);
 
         }
         return $this;
@@ -299,6 +321,8 @@ class Model {
 
     public function __construct($db, $table, $item) {
         $this->__meta = array();
+        $this->__meta['changed'] = false;
+        $this->__meta['deleted'] = false;
 
         $this->set_meta('db', $db);
         $this->set_meta('table', $table);
@@ -306,8 +330,9 @@ class Model {
 
         $pk = array();
         foreach($this->primary_key() as $p) {
-            if(!isset($p)) throw new Exception ('One of the primary keys '.
-                                                 'fields wasn\'t fetched');
+            if(!array_key_exists($p, $item))
+                throw new Exception ('One of the primary keys '.
+                                     'fields wasn\'t fetched');
             $pk[$p] = $item[$p];
         }
         $this->set_meta('primary_key', $pk);
@@ -322,18 +347,20 @@ class Model {
     }
 
     public function __set($k, $v) {
-        if(isset($this->__meta['item'][$k])) {
+        if(array_key_exists($k, $this->__meta['item'])) {
+            if(!$this->__meta['item'][$k] !== $v)
+                $this->__meta['changed'] = true;
             $this->__meta['item'][$k] = $v;
         } else {
-            throw new Exception (sprintf('Field "%s" doesn\'t exist', $k));
+            throw new StructureException(sprintf('Field "%s" doesn\'t exist', $k));
         }
     }
 
     public function __get($k) {
-        if(isset($this->__meta['item'][$k])) {
+        if(array_key_exists($k, $this->__meta['item'])) {
             return $this->__meta['item'][$k];
         } else {
-            throw new Exception (sprintf('Field "%s" doesn\'t exist', $k));
+            throw new StructureException(sprintf('Field "%s" doesn\'t exist', $k));
         }
     }
 
@@ -350,14 +377,34 @@ class Model {
         return sprintf("%s(%s)", ucfirst($this->get_meta('table')), $r);
     }
 
-    public function save() {
+    public function delete() {
         $where = $this->get_meta('primary_key');
         $table = $this->get_meta('table');
-        $q = $this->get_meta('db')->update_where($table,
-                                            $this->get_meta('item'), $where);
+        $q = $this->get_meta('db')->delete_where($table, $where);
         if($q->affected() != 1)
             throw new Exception (sprintf('ActiveRecord update went wrong: '.
-                'there were %d rows updated instead of 1', $q->affected()));
+                'there were %d rows deleted instead of 1', $q->affected()));
+        $this->__meta['deleted'] = true;
+    }
+
+    public function save() {
+        if($this->__meta['deleted'])
+            throw new Exception ('This item was previously deleted');
+
+        if($this->__meta['changed']) {
+
+            $where = $this->get_meta('primary_key');
+            $table = $this->get_meta('table');
+            $q = $this->get_meta('db')->update_where($table,
+                                                $this->get_meta('item'), $where);
+
+            if($q->affected() != 1)
+                throw new Exception (sprintf('ActiveRecord update went wrong: '.
+                    'there were %d rows updated instead of 1', $q->affected()));
+        } else {
+            if($this->get_meta('db')->verbose)
+                print "Won't save!";
+        };
     }
 
 }
@@ -372,16 +419,15 @@ class ActiveRecordQuery extends Query {
         return $m[1];
     }
 
-    public function fetch_active() {
+    public function fetch_all_active() {
         $this->run();
-        $row = @mysql_fetch_assoc($this->rq);
-        if($row) {
+        $ret = array();
+        while($row = @mysql_fetch_assoc($this->rq)) {
             $m = 'DBix\Model';
             $m = new $m($this->db, $this->extract_table(), $row);
-            return $m;
-        } else {
-            return false;
+            $ret []= $m;
         }
+        return $ret;
     }
 }
 
@@ -393,3 +439,4 @@ function partition($string, $cut_at) {
 }
 
 class Exception extends \Exception {}
+class StructureException extends Exception {}

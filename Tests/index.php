@@ -105,12 +105,7 @@ class DbalTest extends PHPUnit_Framework_Testcase {
             array('st' => 'test', 'st1' => 'test'),
             array('st' => 'test1', 'st1' => 'test1')
         );
-    }
 
-    /**
-    * @depends testMigration
-    */
-    public function testSelectsUpdates1() {
         $table = $this->table;
         $calc = $this->db->query('SELECT * FROM `?`', $table)->fetch_all();
         $expected = array(array('id' => 1, 'st' => 'test1', 'st1' => 'test1'));
@@ -127,22 +122,23 @@ class DbalTest extends PHPUnit_Framework_Testcase {
             array('id' => 1)
         );
         $this->assertEquals(1, $q->affected());
+
         $item = $this->db->query('SELECT id, st, st1 FROM `?`', $table)->fetch_row();
         $this->assertEquals(array('id' => 1, 'st' => 'test2', 'st1' => 'test2'), $item);
     }
 
     /**
-    * @depends testMigration
+    * @depends testSelectsUpdates
     */
     public function test1() {
         $q = $this->db->query('SELECT id, st FROM `?`', $this->table);
-        while($item = $q->fetch_active()) {
-            $item->st = 1;
+        foreach($q->fetch_all_active() as $item) {
+            $item->st = 777;
             $item->save();
         }
 
         $item = $this->db->query('SELECT id, st FROM `?`', $this->table)->fetch_row();
-        $this->assertEquals(array('id' => 1, 'st' => '1'), $item);
+        $this->assertEquals(array('id' => 1, 'st' => '777'), $item);
     }
 
 
@@ -174,7 +170,129 @@ class DbalTest extends PHPUnit_Framework_Testcase {
         $this->db->query('WRONG BUTON')->run();
     }
 
+    public function create_st_12_item() {
+        return $this->db->insert($this->table, array('st' =>'12'))->last_id();
+    }
+
+    public function get_st_12_item($id) {
+        $q = $this->db->query('SELECT * FROM `?` WHERE st=?', $this->table, 12);
+        $items = $q->fetch_all_active();
+        $this->assertEquals(1, count($items));
+        $this->assertEquals($items[0]->id, $id);
+        return $items[0];
+    }
+
+    /**
+    * @depends testSelectsUpdates
+    * @expectedException DBix\Exception
+    */
+    public function test2() {
+        $id = $this->create_st_12_item();
+        $item1 = $this->get_st_12_item($id);
+        $item2 = $this->get_st_12_item($id);
+        $item2->st = 13;
+
+        $item1->delete();
+        $item2->save();
+    }
+
+    /**
+    * @depends testSelectsUpdates
+    * @expectedException DBix\Exception
+    */
+    public function test3() {
+        $id = $this->create_st_12_item();
+        $item1 = $this->get_st_12_item($id);
+        $item2 = $this->get_st_12_item($id);
+
+        $item1->delete();
+        $item2->delete();
+    }
+
+    /**
+    * @depends testSelectsUpdates
+    * @expectedException DBix\Exception
+    */
+    public function test4() {
+        $id = $this->create_st_12_item();
+        $item1 = $this->get_st_12_item($id);
+
+        $item1->delete();
+        $item1->delete();
+    }
+
+    /**
+    * @depends testSelectsUpdates
+    */
+    public function test5() {
+        $id = $this->create_st_12_item();
+        $item1 = $this->get_st_12_item($id);
+        $item1->st1 = '14';
+        $item1->save();
+
+        $item1 = $this->get_st_12_item($id);
+        $this->assertEquals(14, $item1->st1);
+        $item1->delete();
+    }
+
+    /**
+    * @depends testSelectsUpdates
+    * @expectedException DBix\Exception
+    */
+    public function test6() {
+        $id = $this->create_st_12_item();
+        $item1 = $this->get_st_12_item($id);
+        $item1->delete();
+        $item1->save();
+    }
+
+    /**
+    * @depends testSelectsUpdates
+    */
+    public function test7() {
+        $id = $this->create_st_12_item();
+
+        $column = array();
+        $items = $this->db->query('SELECT id FROM `?`', $this->table)->fetch_all();
+
+        foreach($items as $item) $col []= $item['id'];
+
+        $col2 = $this->db->query('SELECT id FROM `?`', $this->table)->fetch_column();
+        $this->assertEquals($col, $col2);
+
+        $item1 = $this->get_st_12_item($id);
+        $item1->delete();
+    }
+
+    /**
+    * @depends testSelectsUpdates
+    * @expectedException DBix\StructureException
+    */
+    public function testNonExistingGet() {
+        $items = $this->db->query('select * from `?`', $this->table)->fetch_all_active();
+        $fail = $items[0]->non_field;
+    }
+
+    /**
+    * @depends testSelectsUpdates
+    * @expectedException DBix\StructureException
+    */
+    public function testNonExistingSet() {
+        $items = $this->db->query('select * from `?`', $this->table)->fetch_all_active();
+        $items[0]->non_field = 'fail';
+    }
+
+    /**
+    * @depends testSelectsUpdates
+    * @expectedException DBix\Exception
+    */
+    public function testBadPrimaryKeyUpdate() {
+        $items = $this->db->query('select st from `?`', $this->table)->fetch_all_active();
+        $items[0]->st = '13';
+        $items[0]->save();
+    }
 }
+
 
 
 

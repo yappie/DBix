@@ -165,7 +165,7 @@ class DBAL {
         return $q->num_rows() > 0;
     }
 
-    public function migrate_schema($table, $new_schema) {
+    public function upgrade_schema($table, $new_schema) {
         $old_columns_keys = $this->get_columns_names($table);
         $new_columns_keys = array_keys($new_schema);
 

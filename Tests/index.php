@@ -76,7 +76,7 @@ class DbalTest extends PHPUnit_Framework_Testcase {
     public function testMigration() {
         $this->db->execute('ALTER TABLE `?` ADD UNIQUE INDEX (st)', $this->table);
 
-        $this->db->migrate_schema($this->table, array(
+        $this->db->upgrade_schema($this->table, array(
             'id' => 'BIGINT AUTO_INCREMENT PRIMARY KEY',
             'st' => 'VARCHAR(250)',
             'st1' => 'VARCHAR(250)',

@@ -1,10 +1,17 @@
-Example code:
+Example code
+============
 
     $db = 'mysql://user:pass@localhost/db';
 
     $db->create_table($this->table, array(
         'id' => 'BIGINT AUTO_INCREMENT PRIMARY KEY',
         'st' => 'VARCHAR(250)',
+    ));
+
+    $this->db->upgrade_schema($this->table, array(
+        'id' => 'BIGINT AUTO_INCREMENT PRIMARY KEY',
+        'st' => 'VARCHAR(250)',
+        'st1' => 'VARCHAR(250)', // this field will be added to 'table'
     ));
 
     $item = new DBix\Model($this->db, 'table');
@@ -26,4 +33,14 @@ Example code:
     $db->execure('DROP TABLE `?`', 'table');
 
 
-See [example.php](https://github.com/yappie/DBix/blob/master/example.php)
+Ideas (maybe)
+=============
+
+$users = $db->create_table('users', ....)
+$users->create(...)
+
+
+More info
+=========
+
+See [example.php](https://github.com/yappie/DBix/blob/master/example.php) and [Tests/index.php]([example.php](https://github.com/yappie/DBix/blob/master/Tests/index.php))

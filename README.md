@@ -76,7 +76,7 @@ Ideas (maybe)
 Download
 ========
 
-Get (DBix.php)[https://github.com/yappie/DBix/blob/master/lib/DBix.php]
+Get [DBix.php](https://github.com/yappie/DBix/blob/master/lib/DBix.php)
 
 More info
 =========

@@ -9,8 +9,6 @@
  *
  */
 
-
-
 namespace DBix;
 
 function array_repeat($needle, $times) {

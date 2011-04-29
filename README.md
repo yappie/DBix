@@ -74,9 +74,9 @@ Ideas (maybe)
 More info
 =========
 
-See [example.php](https://github.com/yappie/DBix/blob/master/example.php) and [Tests/index.php]([example.php](https://github.com/yappie/DBix/blob/master/Tests/index.php)
+See [example.php](https://github.com/yappie/DBix/blob/master/example.php) and [Tests/index.php](https://github.com/yappie/DBix/blob/master/Tests/index.php)
 
 Tests
 =====
 
-In [Tests/index.php]([example.php](https://github.com/yappie/DBix/blob/master/Tests/index.php)
+In [Tests/index.php](https://github.com/yappie/DBix/blob/master/Tests/index.php)

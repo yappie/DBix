@@ -79,4 +79,4 @@ See [example.php](https://github.com/yappie/DBix/blob/master/example.php) and [T
 Tests
 =====
 
-In `Tests/index.php`
+In [Tests/index.php]([example.php](https://github.com/yappie/DBix/blob/master/Tests/index.php)

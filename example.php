@@ -1,6 +1,6 @@
 <?
 
-require 'DBix.php';
+require 'lib/DBix.php';
 
 # Replace this with your connection string
 function mysql_pass() { return trim(file_get_contents('/home/http/my.cnf')); }

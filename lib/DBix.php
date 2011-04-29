@@ -27,16 +27,16 @@ class DBAL {
         $u = parse_url($url);
 
         @mysql_pconnect($u['host'], $u['user'], $u['pass']);
-        if(mysql_error()) throw new \Exception ('MySQL can not connect');
+        if(mysql_error()) throw new Exception ('MySQL can not connect');
 
         @mysql_select_db(substr($u['path'], 1, 1000));
-        if(mysql_error()) throw new \Exception ('MySQL can not select db');
+        if(mysql_error()) throw new Exception ('MySQL can not select db');
 
         return $this;
     }
 
     public function query($query, $params = null) {
-        if(!$query) throw new \Exception ('Needs query');
+        if(!$query) throw new Exception ('Needs query');
         $params = lazy_params($params, func_get_args());
 
         $q = new ActiveRecordQuery($query, $params);
@@ -50,7 +50,7 @@ class DBAL {
     }
 
     public function insert($table, $row) {
-        if(!$table) throw new \Exception ('Needs table');
+        if(!$table) throw new Exception ('Needs table');
         $keys_holders = join(', ', array_repeat('`?`', count($row)));
         $keys_values = join(', ', array_repeat('?', count($row)));
         $values = array_merge(
@@ -74,7 +74,7 @@ class DBAL {
     }
 
     public function insert_update($table, $insert, $update) {
-        if(!$table) throw new \Exception ('Needs table');
+        if(!$table) throw new Exception ('Needs table');
         $keys_holders = join(', ', array_repeat('`?`', count($insert)));
         $keys_values = join(', ', array_repeat('?', count($insert)));
 
@@ -91,7 +91,7 @@ class DBAL {
     }
 
     public function update_where($table, $update, $where) {
-        if(!$table) throw new \Exception ('Needs table');
+        if(!$table) throw new Exception ('Needs table');
         list($update_holders, $update_keys_values) = $this->k_eq_q($update);
         list($where_holders,  $where_keys_values) = $this->k_eq_q($where);
 
@@ -108,7 +108,7 @@ class DBAL {
 
     public static function check_symbols($syms, $def, $exc) {
         if(!preg_match('#^[' . $syms . ']+$#is', $def))
-                throw new \Exception($exc);
+                throw new Exception($exc);
     }
 
     public function create_table($table, $schema) {
@@ -211,7 +211,7 @@ class Query {
         $num_found = preg_match_all($regex, $query, $m);
 
         if($num_found != count($params))
-            throw new \Exception (sprintf('Number of placeholders(%d) didn\'t '.
+            throw new Exception (sprintf('Number of placeholders(%d) didn\'t '.
                     'match number of params(%d)', $num_found, count($params)));
 
         $replacer = function($m) use ($params) {
@@ -240,7 +240,7 @@ class Query {
             $this->has_run = true;
             $this->rq = @mysql_query($this->get_sql());
             if(mysql_error())
-                throw new \Exception ('Query:' . $this->get_sql() . "\n" .
+                throw new Exception ('Query:' . $this->get_sql() . "\n" .
                                       'MySQL error: ' . mysql_error());
 
             if($this->verbose)
@@ -266,7 +266,7 @@ class Query {
         $this->run();
         $ret = array();
         if($this->num_rows() < 1)
-            throw new \Exception ('There were no results');
+            throw new Exception ('There were no results');
 
         $o = @mysql_fetch_assoc($this->rq);
         return $o;
@@ -306,7 +306,7 @@ class Model {
 
         $pk = array();
         foreach($this->primary_key() as $p) {
-            if(!isset($p)) throw new \Exception ('One of the primary keys '.
+            if(!isset($p)) throw new Exception ('One of the primary keys '.
                                                  'fields wasn\'t fetched');
             $pk[$p] = $item[$p];
         }
@@ -325,7 +325,7 @@ class Model {
         if(isset($this->__meta['item'][$k])) {
             $this->__meta['item'][$k] = $v;
         } else {
-            throw new \Exception (sprintf('Field "%s" doesn\'t exist', $k));
+            throw new Exception (sprintf('Field "%s" doesn\'t exist', $k));
         }
     }
 
@@ -333,7 +333,7 @@ class Model {
         if(isset($this->__meta['item'][$k])) {
             return $this->__meta['item'][$k];
         } else {
-            throw new \Exception (sprintf('Field "%s" doesn\'t exist', $k));
+            throw new Exception (sprintf('Field "%s" doesn\'t exist', $k));
         }
     }
 
@@ -391,3 +391,5 @@ function partition($string, $cut_at) {
         return array($string, '');
     return array(substr($string, 0, $pos), substr($string, $pos+1, strlen($string)-$pos));
 }
+
+class Exception extends \Exception {}

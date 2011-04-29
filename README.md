@@ -1,6 +1,7 @@
 Example code
 ============
 
+    require 'lib/DBix.php';
     $db = new DBix\DBAL('mysql://user:pass@localhost/db');
 
 Create table:
@@ -69,7 +70,13 @@ Ideas (maybe)
 
 * $users = $db->create_table('users', ....); $users->create(...)
 * fetch_assoc()
-* caching
+* caching ?
+* non-mysql databases support ?
+
+Download
+========
+
+Get (DBix.php)[https://github.com/yappie/DBix/blob/master/lib/DBix.php]
 
 More info
 =========

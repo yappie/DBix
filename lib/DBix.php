@@ -1,5 +1,16 @@
 <?php
 
+/*
+ *      DBix.php
+ *
+ *      Copyright 2011 Slava <bomboze@gmail.com>
+ *
+ *      BSD/MIT Dual Licensed
+ *
+ */
+
+
+
 namespace DBix;
 
 function array_repeat($needle, $times) {

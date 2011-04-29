@@ -1,0 +1,3 @@
+#!/bin/bash
+
+phpunit --coverage-html report Tests/index

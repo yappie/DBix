@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * DBix.php
+ *
+ * @author  Slava V. <bomboze@gmail.com>
+ * @license BSD/MIT Dual Licensed
+ * @url     https://github.com/yappie/DBix
+ *
+ */
+
 require('lib/DBix.php');
 define('MYSQL_TABLE', 'test1');
 

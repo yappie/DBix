@@ -3,7 +3,7 @@
 /*
  * DBix.php
  *
- * @author  Slava <bomboze@gmail.com>
+ * @author  Slava V. <bomboze@gmail.com>
  * @license BSD/MIT Dual Licensed
  * @url     https://github.com/yappie/DBix
  *

@@ -80,3 +80,8 @@ Tests
 =====
 
 In [Tests/index.php](https://github.com/yappie/DBix/blob/master/Tests/index.php)
+
+License
+=======
+
+MIT/BSD Dual license

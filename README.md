@@ -28,7 +28,7 @@ Enable debug:
 
     $db->verbose = true;
 
-Quering:
+Querying:
 
     $query = 'select * from `?` where st != ?';
 

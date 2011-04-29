@@ -28,11 +28,16 @@ Enable debug:
 
     $db->verbose = true;
 
-Querying:
+Querying and placeholders:
 
     $query = 'select * from `?` where st != ?';
 
     $run_query = $db->query($query, 'table', 'wrong-stuff')->run();
+
+    // or more formal:
+    $params = array('table', 'wrong-stuff');
+    $run_query = $db->query($query, $params)->run();
+
 
     $items = $db->query($query, 'table', 'wrong-stuff')->fetch_all();
     // also try instead of fetch_all():

@@ -21,7 +21,7 @@ function lazy_params($params, $func_get_args) {
     return $params;
 }
 
-class Connection {
+class DBAL {
     public function __construct($url) {
         $this->verbose = false;
         $u = parse_url($url);
@@ -106,6 +106,80 @@ class Connection {
         return $this->execute($sql, $values);
     }
 
+    public static function check_symbols($syms, $def, $exc) {
+        if(!preg_match('#^[' . $syms . ']+$#is', $def))
+                throw new \Exception($exc);
+    }
+
+    public function create_table($table, $schema) {
+        $fields = array();
+        foreach($schema as $field_name => $def) {
+            self::check_symbols('a-z0-9_\(\) ', $def,
+                sprintf('Field `%s` has bad definition: "%s"',
+                $field_name, $def));
+            $fields []= '`?` ' . $def;
+        };
+        $def = join(', ', $fields);
+        $query = "CREATE TABLE `?` ($def)";
+        $params = array_merge((array)$table, array_keys($schema));
+        $this->execute($query, $params);
+    }
+
+    public function lock_for_write($table) {
+        $this->execute('LOCK TABLES `?` WRITE', $table);
+    }
+
+    public function unlock() {
+        $this->execute('UNLOCK TABLES');
+    }
+
+    public function get_indices($table) {
+        $indices = $this->query('SHOW INDEX FROM `?`', $table)->fetch_all();
+    }
+
+    public function get_columns_names($table) {
+        $cols = $this->query('SHOW COLUMNS FROM `?`', $table)->fetch_all();
+         # [Field] => id [Type] => bigint(20) [Null] => NO [Key] => PRI [Default] => [Extra] => auto_increment
+        foreach($cols as $col) {
+            $ret []= $col['Field'];
+        }
+        return $ret;
+    }
+
+    public function table_exists($table) {
+        $q = $this->query('SHOW TABLES LIKE ?', $table)->run();
+        return $q->num_rows() > 0;
+    }
+
+    public function migrate_schema($table, $new_schema) {
+        $old_columns_keys = $this->get_columns_names($table);
+        $new_columns_keys = array_keys($new_schema);
+
+        $added_columns = array_diff($new_columns_keys, $old_columns_keys);
+        $same_columns = array_intersect($new_columns_keys, $old_columns_keys);
+        $deleted_columns = array_diff($old_columns_keys, $new_columns_keys);
+
+        $query = 'ALTER TABLE `?` ';
+        $params = array($table);
+
+        $cmds = array();
+
+        foreach($added_columns as $col) {
+            $cmds []= 'ADD COLUMN `?` ' . $new_schema[$col];
+            $params []= $col;
+        }
+
+        foreach($same_columns as $col) {
+            $col_def = $new_schema[$col];
+            $col_def = preg_replace('#\b(primary key|unique|index)\b#is', '', $col_def);
+            $cmds []= 'MODIFY COLUMN `?` ' . $col_def;
+            $params []= $col;
+        }
+
+        $query .= join(', ', $cmds);
+
+        $this->execute($query, $params);
+    }
 }
 
 class Query {
@@ -192,7 +266,7 @@ class Query {
         $this->run();
         $ret = array();
         if($this->num_rows() < 1)
-            throw new Exception ('There were no results');
+            throw new \Exception ('There were no results');
 
         $o = @mysql_fetch_assoc($this->rq);
         return $o;
@@ -309,4 +383,11 @@ class ActiveRecordQuery extends Query {
             return false;
         }
     }
+}
+
+function partition($string, $cut_at) {
+    $pos = strpos($string, $cut_at);
+    if($pos === false)
+        return array($string, '');
+    return array(substr($string, 0, $pos), substr($string, $pos+1, strlen($string)-$pos));
 }

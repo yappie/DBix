@@ -1,11 +1,11 @@
 <?php
 
 /*
- *      DBix.php
+ * DBix.php
  *
- *      Copyright 2011 Slava <bomboze@gmail.com>
- *
- *      BSD/MIT Dual Licensed
+ * @author  Slava <bomboze@gmail.com>
+ * @license BSD/MIT Dual Licensed
+ * @url     https://github.com/yappie/DBix
  *
  */
 

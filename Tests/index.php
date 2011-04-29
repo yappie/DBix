@@ -291,6 +291,29 @@ class DbalTest extends PHPUnit_Framework_Testcase {
         $items[0]->st = '13';
         $items[0]->save();
     }
+
+    public function testItemCreation() {
+        $cnt = $this->db->query('SELECT * FROM `?` WHERE st=13', $this->table)->run()->num_rows();
+        $this->assertEquals(0, $cnt);
+
+        $item = new DBix\Model($this->db, $this->table);
+        $this->assertEquals(null, $item->id);
+
+        $item->st = 13;
+        $item->save();
+        $this->assertNotEquals(null, $item->id);
+
+        $cnt = $this->db->query('SELECT * FROM `?` WHERE st=13', $this->table)->run()->num_rows();
+        $this->assertEquals(1, $cnt);
+
+        $item->st1 = 14;
+        $item->save();
+
+        $cnt = $this->db->query('SELECT * FROM `?` WHERE st=13', $this->table)->run()->num_rows();
+        $this->assertEquals(1, $cnt);
+
+    }
+
 }
 
 

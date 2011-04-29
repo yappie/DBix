@@ -194,6 +194,7 @@ class DBAL {
 
         $this->execute($query, $params);
     }
+
 }
 
 class Query {
@@ -319,13 +320,25 @@ class Query {
 class Model {
     public $__meta;
 
-    public function __construct($db, $table, $item) {
+    public function __get_fields() {
+        return $this->get_meta('db')->get_columns_names($this->get_meta('table'));
+    }
+
+    public function __construct($db, $table, $item = array()) {
         $this->__meta = array();
-        $this->__meta['changed'] = false;
-        $this->__meta['deleted'] = false;
+        $this->set_meta('changed', false);
+        $this->set_meta('deleted', false);
+        $this->set_meta('new_item', empty($item));
 
         $this->set_meta('db', $db);
         $this->set_meta('table', $table);
+
+        if($this->get_meta('new_item')) {
+            foreach($this->__get_fields() as $f) {
+                $item[$f] = null;
+            };
+        };
+
         $this->set_meta('item', $item);
 
         $pk = array();
@@ -335,6 +348,7 @@ class Model {
                                      'fields wasn\'t fetched');
             $pk[$p] = $item[$p];
         }
+
         $this->set_meta('primary_key', $pk);
     }
 
@@ -390,6 +404,24 @@ class Model {
     public function save() {
         if($this->__meta['deleted'])
             throw new Exception ('This item was previously deleted');
+
+        $table = $this->get_meta('table');
+        if($this->get_meta('new_item')) {
+            $q = $this->get_meta('db')->insert($table, $this->get_meta('item'));
+
+            if($this->primary_key() == array('id')) {
+                $new_id = $q->last_id();
+                $this->__meta['item']['id'] = $new_id;
+                $this->__meta['primary_key']['id'] = $new_id;
+                $this->set_meta('new_item', false);
+            } else {
+                throw new Exception ('I don\'t know how to update composite '.
+                    'primary keys (missing feature), but the row was inserted, '.
+                    'suppress this with try-catch.');
+            }
+            return;
+
+        }
 
         if($this->__meta['changed']) {
 

@@ -73,13 +73,18 @@ Unsorted stuff:
 
     if($db->table_exists($table))
 
+Ideas (for sure)
+=============
+
+* fetch_assoc()
+* validation
+* indices management
+* joins
+
 Ideas (maybe)
 =============
 
 * $users = $db->create_table('users', ....); $users->create(...)
-* fetch_assoc()
-* indices management
-* joins
 * caching ?
 * non-mysql databases support ?
 

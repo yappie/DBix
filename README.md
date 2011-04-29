@@ -38,6 +38,7 @@ Querying and placeholders:
     $params = array('table', 'wrong-stuff');
     $run_query = $db->query($query, $params)->run();
 
+Getting results:
 
     $items = $db->query($query, 'table', 'wrong-stuff')->fetch_all();
     // also try instead of fetch_all():

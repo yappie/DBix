@@ -63,13 +63,23 @@ Raw statments:
 
     $db->execute('DROP TABLE `?`', 'table');
 
+Unsorted stuff:
 
+    $db->insert($table, array('st' => 'test', 'st1' => 'test'));
+    $db->update_where($table,
+        array('st' => 'test', 'st1' => 'test'),
+        array('st' => 'test', 'st1' => 'test')
+    );
+
+    if($db->table_exists($table))
 
 Ideas (maybe)
 =============
 
 * $users = $db->create_table('users', ....); $users->create(...)
 * fetch_assoc()
+* indices management
+* joins
 * caching ?
 * non-mysql databases support ?
 

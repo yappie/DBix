@@ -82,6 +82,8 @@ Ideas (for sure)
 * validation
 * indices management
 * joins
+* http://www.php.net/manual/en/pdostatement.getcolumnmeta.php
+* http://www.php.net/manual/en/pdo.quote.php
 
 Ideas (maybe)
 =============

@@ -88,6 +88,9 @@ Ideas (maybe)
 * $users = $db->create_table('users', ....); $users->create(...)
 * caching ?
 * non-mysql databases support ?
+* multiple db support
+* slaves? 
+* write protection flag?
 
 Download
 ========

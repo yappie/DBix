@@ -32,16 +32,17 @@ Enable debug:
 Querying and placeholders:
 
     $query = 'select * from `?` where st != ?';
-
-    $run_query = $db->query($query, 'table', 'wrong-stuff')->run();
+    $run_query = $db->query($query, 'table', 'first string')->run();
 
     // or more formal:
-    $params = array('table', 'wrong-stuff');
+
+    $query = 'select * from `?` where st != ?';
+    $params = array('table', 'first string');
     $run_query = $db->query($query, $params)->run();
 
 Getting results:
 
-    $items = $db->query($query, 'table', 'wrong-stuff')->fetch_all();
+    $items = $db->query($query, 'table', 'first string')->fetch_all();
     // also try instead of fetch_all():
     // ->fetch_row() - 1 row
     // ->fetch_column() - 1 column as array

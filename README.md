@@ -77,6 +77,7 @@ Unsorted stuff:
 Ideas (for sure)
 =============
 
+* listeners (for logging, maybe?)
 * fetch_assoc()
 * validation
 * indices management
@@ -85,6 +86,7 @@ Ideas (for sure)
 Ideas (maybe)
 =============
 
+* support for is_deleted flag?
 * $users = $db->create_table('users', ....); $users->create(...)
 * caching ?
 * non-mysql databases support ?

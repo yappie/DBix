@@ -82,6 +82,9 @@ Ideas (for sure)
 * validation
 * indices management
 * joins
+* model forms (w/perms)
+* column forms
+* ajax'y DataGrids
 * http://www.php.net/manual/en/pdostatement.getcolumnmeta.php
 * http://www.php.net/manual/en/pdo.quote.php
 

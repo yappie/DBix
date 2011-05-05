@@ -118,3 +118,9 @@ License
 =======
 
 MIT/BSD Dual license
+
+Road Map
+========
+* Move to PDO, PDO's "quote"
+* PDO http://www.php.net/manual/en/pdostatement.getcolumnmeta.php
+* Joins

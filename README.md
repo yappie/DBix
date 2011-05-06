@@ -77,6 +77,8 @@ Unsorted stuff:
 Ideas (for sure)
 =============
 
+* fetch_row_active
+* array arguments for substitution
 * listeners (for logging, maybe?)
 * fetch_assoc()
 * validation

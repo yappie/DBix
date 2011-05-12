@@ -13,7 +13,7 @@ Create table:
 
 Migrate table to newer version:
 
-    $this->db->upgrade_schema($this->table, array(
+    $db->upgrade_schema($this->table, array(
         'id' => 'BIGINT AUTO_INCREMENT PRIMARY KEY',
         'st' => 'VARCHAR(250)',
         'st1' => 'VARCHAR(250)', // this field will be added to 'table'

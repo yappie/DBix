@@ -13,7 +13,7 @@ Create table:
 
 Migrate table to newer version:
 
-    $this->db->upgrade_schema($this->table, array(
+    $db->upgrade_schema($this->table, array(
         'id' => 'BIGINT AUTO_INCREMENT PRIMARY KEY',
         'st' => 'VARCHAR(250)',
         'st1' => 'VARCHAR(250)', // this field will be added to 'table'
@@ -77,6 +77,8 @@ Unsorted stuff:
 Ideas (for sure)
 =============
 
+* fetch_row_active
+* array arguments for substitution
 * listeners (for logging, maybe?)
 * fetch_assoc()
 * validation
@@ -118,3 +120,9 @@ License
 =======
 
 MIT/BSD Dual license
+
+Road Map
+========
+* Move to PDO, PDO's "quote"
+* PDO http://www.php.net/manual/en/pdostatement.getcolumnmeta.php
+* Joins

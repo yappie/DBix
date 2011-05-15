@@ -12,7 +12,7 @@
 require('lib/DBix.php');
 define('MYSQL_TABLE', 'test1');
 
-class DbalTest extends PHPUnit_Framework_Testcase {
+class DbalTest extends PHPUnit_Framework_TestCase {
     public function setUp() {
         $conn = 'mysql://root:'.trim(file_get_contents('/home/http/my.cnf')).
                 '@localhost/' . MYSQL_TABLE;

@@ -11,6 +11,16 @@
 
 namespace DBix;
 
+class PDONullEnabled extends \PDO { 
+  public function quote($value, $parameter_type = \PDO::PARAM_STR ) { 
+    if( is_null($value) ) { 
+      return "NULL"; 
+    } 
+    
+    return parent::quote($value, $parameter_type); 
+  } 
+}
+
 function array_repeat($needle, $times) {
     $ret = array();
     for ($i = 0; $i < $times; $i++) {
@@ -31,15 +41,28 @@ function lazy_params($params, $func_get_args) {
 }
 
 class DBAL {
+    public $dbh;
+    
     public function __construct($url) {
         $this->verbose = false;
+        $this->connect($url);
+    }
+    
+    private function connect($url) {
         $u = parse_url($url);
+        if(!array_key_exists('path', $u) || !array_key_exists('host', $u))
+            throw new Exception('Please supply a valid URI');
 
-        @mysql_pconnect($u['host'], $u['user'], $u['pass']);
-        if(mysql_error()) throw new Exception ('MySQL can not connect');
-
-        @mysql_select_db(substr($u['path'], 1, 1000));
-        if(mysql_error()) throw new Exception ('MySQL can not select db');
+        try {
+            $db_name = substr($u['path'], 1, 1000);
+            $this->dbh = new PDONullEnabled('mysql:host='.$u['host'].';'.
+                                  'dbname='.$db_name, 
+                                  $u['user'], 
+                                  $u['pass']);
+            $this->dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        } catch (\PDOException $e) {
+            throw new Exception ('MySQL can not connect. ' . $e->getMessage());
+        }
 
         return $this;
     }
@@ -48,9 +71,8 @@ class DBAL {
         if(!$query) throw new Exception ('Needs query');
         $params = lazy_params($params, func_get_args());
 
-        $q = new ActiveRecordQuery($query, $params);
+        $q = new ActiveRecordQuery($this, $query, $params);
         $q->verbose = $this->verbose;
-        $q->db = $this;
         return $q;
     }
 
@@ -204,15 +226,19 @@ class DBAL {
         $this->execute($query, $params);
     }
 
+    public function quote($item) {
+        return $this->dbh->quote($item);
+    }
+
 }
 
 class Query {
     private $_affected, $_num_rows;
-    public function __construct($query, $params = null) {
+    public function __construct($db, $query, $params = null) {
         $params = lazy_params($params, func_get_args());
+        $this->db = $db;
         $this->query = $this->sql_query($query, $params);
         $this->has_run = false;
-        $this->db = null;
     }
 
     public function get_sql() {
@@ -220,7 +246,7 @@ class Query {
     }
 
     public function last_id() {
-        return $this->db->query('SELECT LAST_INSERT_ID()')->fetch_cell();
+        return $this->db->dbh->lastInsertId();
     }
 
     public function affected() {
@@ -243,7 +269,8 @@ class Query {
             throw new Exception (sprintf('Number of placeholders(%d) didn\'t '.
                     'match number of params(%d)', $num_found, count($params)));
 
-        $replacer = function($m) use ($params) {
+        $saved_this = $this;
+        $replacer = function($m) use ($params, $saved_this) {
             static $calls;
             if(!isset($calls)) $calls = 0;
             $replace = $params[(int)$calls];
@@ -252,9 +279,12 @@ class Query {
                 return 'NULL';
             } else {
                 if($m[1] == '?') {
-                    return '"' . @mysql_real_escape_string($replace) . '"';
+                    $quoted = $saved_this->db->quote($replace);
+                    return $quoted;
                 } elseif($m[1] == '`?`') {
-                    return '`' . @mysql_real_escape_string($replace) . '`';
+                    $quoted = $saved_this->db->quote($replace);
+                    $quoted = substr($quoted, 1, count($quoted) - 2);
+                    return '`' . $quoted . '`';
                 } else {
                     throw new Exception ('Unhandled placeholder');
                 }
@@ -267,10 +297,13 @@ class Query {
     public function run() {
         if(!$this->has_run) {
             $this->has_run = true;
-            $this->rq = @mysql_query($this->get_sql());
-            if(mysql_error())
+            try {
+                $this->sth = $this->db->dbh->prepare($this->get_sql());
+                $this->sth->execute();
+            } catch(\PDOException $e) {
                 throw new Exception ('Query:' . $this->get_sql() . "\n" .
-                                      'MySQL error: ' . mysql_error());
+                                     'MySQL error: ' . $e->getMessage());
+            }
 
             if($this->verbose)
                 print sprintf("<div style='background: gray; font: 11px Arial;
@@ -278,8 +311,7 @@ class Query {
                 10px;'>%s<br>Affected %d; num_rows: %d</div>",
                     $this->get_sql(), $this->affected(), $this->num_rows());
 
-            $this->_affected = @mysql_affected_rows();
-            $this->_num_rows = @mysql_num_rows($this->rq);
+            $this->_affected = $this->_num_rows = $this->sth->rowCount();
 
         }
         return $this;
@@ -288,7 +320,9 @@ class Query {
     public function fetch_all() {
         $this->run();
         $ret = array();
-        while($o = @mysql_fetch_assoc($this->rq)) {
+        $this->sth->setFetchMode(\PDO::FETCH_ASSOC);
+
+        while($o = $this->sth->fetch()) {
             $ret []= $o;
         }
         return $ret;
@@ -299,8 +333,9 @@ class Query {
         $ret = array();
         if($this->num_rows() < 1)
             throw new Exception ('There were no results');
-
-        $o = @mysql_fetch_assoc($this->rq);
+            
+        $this->sth->setFetchMode(\PDO::FETCH_ASSOC);
+        $o = $this->sth->fetch();
         return $o;
     }
 
@@ -308,7 +343,8 @@ class Query {
         $this->run();
         $ret = array();
 
-        while($o = @mysql_fetch_row($this->rq)) {
+        $this->sth->setFetchMode(\PDO::FETCH_NUM);
+        while($o = $this->sth->fetch()) {
             $ret []= $o[0];
         }
         return $ret;
@@ -320,7 +356,8 @@ class Query {
         if($this->num_rows() < 1)
             throw new Exception ('There were no results');
 
-        $o = @mysql_fetch_row($this->rq);
+        $this->sth->setFetchMode(\PDO::FETCH_NUM);
+        $o = $this->sth->fetch();
         return $o[0];
     }
 
@@ -330,7 +367,8 @@ class Model {
     public $__meta;
 
     public function __get_fields() {
-        return $this->get_meta('db')->get_columns_names($this->get_meta('table'));
+        $table = $this->get_meta('table');
+        return $this->get_meta('db')->get_columns_names($table);
     }
 
     public function __construct($db, $table, $item = array()) {
@@ -451,9 +489,9 @@ class Model {
 }
 
 class ActiveRecordQuery extends Query {
-    public function __construct($query, $params = null) {
-        parent::__construct($query, $params);
-    }
+    #public function __construct($query, $params = null) {
+    #    parent::__construct($query, $params);
+    #}
 
     public function extract_table() {
         preg_match('#^\s*select.*?from\s+`(.*?)`#is', $this->get_sql(), $m);
@@ -463,7 +501,8 @@ class ActiveRecordQuery extends Query {
     public function fetch_all_active() {
         $this->run();
         $ret = array();
-        while($row = @mysql_fetch_assoc($this->rq)) {
+        $this->sth->setFetchMode(\PDO::FETCH_ASSOC);
+        while($row = $this->sth->fetch()) {
             $m = 'DBix\Model';
             $m = new $m($this->db, $this->extract_table(), $row);
             $ret []= $m;
@@ -476,7 +515,9 @@ function partition($string, $cut_at) {
     $pos = strpos($string, $cut_at);
     if($pos === false)
         return array($string, '');
-    return array(substr($string, 0, $pos), substr($string, $pos+1, strlen($string)-$pos));
+    return array(substr($string, 0, $pos), 
+                 substr($string, $pos+1, 
+                 strlen($string)-$pos));
 }
 
 class Exception extends \Exception {}

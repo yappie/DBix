@@ -14,11 +14,34 @@ define('MYSQL_TABLE', 'test1');
 
 class DbalTest extends PHPUnit_Framework_TestCase {
     public function setUp() {
-        $conn = 'mysql://root:'.trim(file_get_contents('/home/http/my.cnf')).
-                '@localhost/' . MYSQL_TABLE;
-        $this->db = new DBix\DBAL($conn);
+        $this->conn = 'mysql://root:'.
+                        trim(file_get_contents('/home/http/my.cnf')).
+                        '@localhost/' . MYSQL_TABLE;
+        $this->db = new DBix\DBAL($this->conn);
         $this->db->verbose = false;
         $this->table = 'test1';
+    }
+
+    public function testSelect1() {
+        $all = $this->db->query('SELECT "test" AS x')->fetch_all();
+        $this->assertEquals('test', $all[0]['x']);
+    }
+
+    /**
+     * @expectedException DBix\Exception
+     */
+    public function testBadDBConnection2() {
+        $conn = $this->conn;
+        $conn = str_replace('@', '1@', $conn);
+        $this->db = new DBix\DBAL($conn);
+    }
+
+    /**
+     * @expectedException DBix\Exception
+     */
+    public function testBadDBConnection() {
+        $this->db = new DBix\DBAL('bad');
+        
     }
 
     public function testArrayRepeat() {

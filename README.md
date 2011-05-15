@@ -74,21 +74,24 @@ Unsorted stuff:
 
     if($db->table_exists($table))
 
+Road Map
+========
+* PDO http://www.php.net/manual/en/pdostatement.getcolumnmeta.php
+* Array arguments for substitution
+* Validation
+* Joins
+
 Ideas (for sure)
 =============
 
 * fetch_row_active
-* array arguments for substitution
 * listeners (for logging, maybe?)
 * fetch_assoc()
-* validation
 * indices management
 * joins
 * model forms (w/perms)
 * column forms
 * ajax'y DataGrids
-* http://www.php.net/manual/en/pdostatement.getcolumnmeta.php
-* http://www.php.net/manual/en/pdo.quote.php
 
 Ideas (maybe)
 =============
@@ -121,8 +124,3 @@ License
 
 MIT/BSD Dual license
 
-Road Map
-========
-* Move to PDO, PDO's "quote"
-* PDO http://www.php.net/manual/en/pdostatement.getcolumnmeta.php
-* Joins

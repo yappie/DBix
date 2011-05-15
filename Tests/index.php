@@ -345,6 +345,11 @@ class DbalTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $cnt);
 
     }
+    
+    public function testExtractTable() {
+        $items = $this->db->query('SELECT id FROM `?`', $this->table)->run();
+        $this->assertEquals($this->table, $items->extract_table());        
+    }
 
 }
 

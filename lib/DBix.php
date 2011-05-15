@@ -494,8 +494,10 @@ class ActiveRecordQuery extends Query {
     #}
 
     public function extract_table() {
-        preg_match('#^\s*select.*?from\s+`(.*?)`#is', $this->get_sql(), $m);
-        return $m[1];
+        $this->run();
+        $column_meta = $this->sth->getColumnMeta(0);
+        $table = $column_meta['table'];
+        return $table;
     }
 
     public function fetch_all_active() {

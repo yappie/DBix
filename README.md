@@ -77,7 +77,6 @@ Unsorted stuff:
 Road Map
 ========
 * PDO http://www.php.net/manual/en/pdostatement.getcolumnmeta.php
-* Array arguments for substitution
 * Validation
 * Joins
 

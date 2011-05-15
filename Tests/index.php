@@ -351,6 +351,24 @@ class DbalTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals($this->table, $items->extract_table());        
     }
 
+    /**
+     * @depends testTableCreation
+     */
+    public function testArrayArguments() {
+        $this->db->insert($this->table, array('st' =>'120'))->last_id();
+        $this->db->insert($this->table, array('st' =>'121'))->last_id();
+
+        $items = $this->db->query('SELECT * FROM `?` WHERE st IN ?', 
+                                $this->table, array(120,121,122))
+                          ->fetch_all();
+        $this->assertEquals(2, count($items));
+
+        $items = $this->db->query('SELECT * FROM `?` WHERE st IN ?', 
+                                $this->table, array(999,121,122))
+                           ->fetch_all();
+        $this->assertEquals(1, count($items));
+    }
+
 }
 
 

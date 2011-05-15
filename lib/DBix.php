@@ -13,7 +13,7 @@ namespace DBix;
 
 class PDONullEnabled extends \PDO { 
   public function quote($value, $parameter_type = \PDO::PARAM_STR ) { 
-    if( is_null($value) ) { 
+    if(is_null($value)) { 
       return "NULL"; 
     } 
     
@@ -279,7 +279,11 @@ class Query {
                 return 'NULL';
             } else {
                 if($m[1] == '?') {
-                    $quoted = $saved_this->db->quote($replace);
+                    if(is_array($replace)) {
+                        $quoted = $saved_this->quote_array($replace);
+                    } else {
+                        $quoted = $saved_this->db->quote($replace);
+                    }
                     return $quoted;
                 } elseif($m[1] == '`?`') {
                     $quoted = $saved_this->db->quote($replace);
@@ -292,6 +296,14 @@ class Query {
         };
 
         return preg_replace_callback($regex, $replacer, $query);
+    }
+    
+    public function quote_array($arr) {
+        $values = array();
+        foreach($arr as $v) {
+            $values []= $this->db->quote($v);
+        };
+        return '(' . join(', ', $values) . ')';
     }
 
     public function run() {

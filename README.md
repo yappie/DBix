@@ -25,6 +25,14 @@ Create new item:
     $item->st = 'test';
     $item->save();
 
+ActiveRecord:
+
+    $query = 'select * from `?` where st == ?';
+    $items = $db->query($query, 'table', '1')->fetch_all_active();
+    $items[0]->st = 'more-updates';
+    $items[0]->save();
+    $items[0]->delete();
+
 Enable debug:
 
     $db->verbose = true;
@@ -43,22 +51,14 @@ Querying and placeholders:
 Getting results:
 
     $items = $db->query($query, 'table', 'first string')->fetch_all();
-    // also try instead of fetch_all():
-    // ->fetch_row() - 1 row
-    // ->fetch_column() - 1 column as array
-    // ->fetch_cell() - 1 item
+        //                 ->fetch_row()    - 1 row
+        //                 ->fetch_column() - 1 column as array
+        //                 ->fetch_cell()   - 1 item
 
 Getting number of rows returned and affected:
 
     print $q->num_rows();
     print $q->affected();
-
-ActiveRecord:
-
-    $items = $db->query($query, 'table', 'wrong-stuff')->fetch_all_active();
-    $items[0]->st = 'more-updates';
-    $items[0]->save();
-    $items[0]->delete();
 
 Raw statments:
 

@@ -6,14 +6,14 @@ Example code
 
 Create table:
 
-    $db->create_table($this->table, array(
+    $db->create_table($table, array(
         'id' => 'BIGINT AUTO_INCREMENT PRIMARY KEY',
         'st' => 'VARCHAR(250)',
     ));
 
 Migrate table to newer version:
 
-    $db->upgrade_schema($this->table, array(
+    $db->upgrade_schema($table, array(
         'id' => 'BIGINT AUTO_INCREMENT PRIMARY KEY',
         'st' => 'VARCHAR(250)',
         'st1' => 'VARCHAR(250)', // this field will be added to 'table'
@@ -21,7 +21,7 @@ Migrate table to newer version:
 
 Create new item:
 
-    $item = new DBix\Model($this->db, 'table');
+    $item = new DBix\Model($db, 'table');
     $item->st = 'test';
     $item->save();
 

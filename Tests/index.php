@@ -41,7 +41,7 @@ class DbalTest extends PHPUnit_Framework_TestCase {
      */
     public function testBadDBConnection() {
         $this->db = new DBix\DBAL('bad');
-        
+
     }
 
     public function testArrayRepeat() {
@@ -345,10 +345,10 @@ class DbalTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $cnt);
 
     }
-    
+
     public function testExtractTable() {
         $items = $this->db->query('SELECT id FROM `?`', $this->table)->run();
-        $this->assertEquals($this->table, $items->extract_table());        
+        $this->assertEquals($this->table, $items->extract_table());
     }
 
     /**
@@ -358,16 +358,28 @@ class DbalTest extends PHPUnit_Framework_TestCase {
         $this->db->insert($this->table, array('st' =>'120'))->last_id();
         $this->db->insert($this->table, array('st' =>'121'))->last_id();
 
-        $items = $this->db->query('SELECT * FROM `?` WHERE st IN ?', 
+        $items = $this->db->query('SELECT * FROM `?` WHERE st IN ?',
                                 $this->table, array(120,121,122))
                           ->fetch_all();
         $this->assertEquals(2, count($items));
 
-        $items = $this->db->query('SELECT * FROM `?` WHERE st IN ?', 
+        $items = $this->db->query('SELECT * FROM `?` WHERE st IN ?',
                                 $this->table, array(999,121,122))
                            ->fetch_all();
         $this->assertEquals(1, count($items));
     }
+
+    /**
+     * @depends testTableCreation
+     */
+    public function testChars() {
+        $src = 'тест';
+        $id = $this->db->insert($this->table, array('st' => $src))->last_id();
+        $return = $this->db->query('SELECT st FROM `?` WHERE id=?',
+                                    $this->table, $id)->fetch_cell();
+        $this->assertEquals($return, $src);
+    }
+
 
 }
 

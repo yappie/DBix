@@ -11,14 +11,14 @@
 
 namespace DBix;
 
-class PDONullEnabled extends \PDO { 
-  public function quote($value, $parameter_type = \PDO::PARAM_STR ) { 
-    if(is_null($value)) { 
-      return "NULL"; 
-    } 
-    
-    return parent::quote($value, $parameter_type); 
-  } 
+class PDONullEnabled extends \PDO {
+  public function quote($value, $parameter_type = \PDO::PARAM_STR ) {
+    if(is_null($value)) {
+      return "NULL";
+    }
+
+    return parent::quote($value, $parameter_type);
+  }
 }
 
 function array_repeat($needle, $times) {
@@ -42,12 +42,12 @@ function lazy_params($params, $func_get_args) {
 
 class DBAL {
     public $dbh;
-    
+
     public function __construct($url) {
         $this->verbose = false;
         $this->connect($url);
     }
-    
+
     private function connect($url) {
         $u = parse_url($url);
         if(!array_key_exists('path', $u) || !array_key_exists('host', $u))
@@ -56,9 +56,13 @@ class DBAL {
         try {
             $db_name = substr($u['path'], 1, 1000);
             $this->dbh = new PDONullEnabled('mysql:host='.$u['host'].';'.
-                                  'dbname='.$db_name, 
-                                  $u['user'], 
+                                  'dbname='.$db_name,
+                                  $u['user'],
                                   $u['pass']);
+            $this->dbh->exec("SET character_set_client='utf8'");
+            $this->dbh->exec("SET character_set_results='utf8'");
+            $this->dbh->exec("SET collation_connection='utf8_general_ci'");
+
             $this->dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         } catch (\PDOException $e) {
             throw new Exception ('MySQL can not connect. ' . $e->getMessage());
@@ -297,7 +301,7 @@ class Query {
 
         return preg_replace_callback($regex, $replacer, $query);
     }
-    
+
     public function quote_array($arr) {
         $values = array();
         foreach($arr as $v) {
@@ -345,7 +349,7 @@ class Query {
         $ret = array();
         if($this->num_rows() < 1)
             throw new Exception ('There were no results');
-            
+
         $this->sth->setFetchMode(\PDO::FETCH_ASSOC);
         $o = $this->sth->fetch();
         return $o;
@@ -529,8 +533,8 @@ function partition($string, $cut_at) {
     $pos = strpos($string, $cut_at);
     if($pos === false)
         return array($string, '');
-    return array(substr($string, 0, $pos), 
-                 substr($string, $pos+1, 
+    return array(substr($string, 0, $pos),
+                 substr($string, $pos+1,
                  strlen($string)-$pos));
 }
 

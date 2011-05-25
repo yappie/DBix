@@ -321,13 +321,13 @@ class Query {
                                      'MySQL error: ' . $e->getMessage());
             }
 
+            $this->_affected = $this->_num_rows = $this->sth->rowCount();
+
             if($this->verbose)
                 print sprintf("<div style='background: gray; font: 11px Arial;
                 color: silver; padding: 5px; margin-bottom:
                 10px;'>%s<br>Affected %d; num_rows: %d</div>",
                     $this->get_sql(), $this->affected(), $this->num_rows());
-
-            $this->_affected = $this->_num_rows = $this->sth->rowCount();
 
         }
         return $this;
@@ -425,7 +425,7 @@ class Model {
 
     public function __set($k, $v) {
         if(array_key_exists($k, $this->__meta['item'])) {
-            if(!$this->__meta['item'][$k] !== $v)
+            if($this->__meta['item'][$k] != $v)
                 $this->__meta['changed'] = true;
             $this->__meta['item'][$k] = $v;
         } else {

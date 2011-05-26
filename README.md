@@ -64,6 +64,14 @@ Raw statments:
 
     $db->execute('DROP TABLE `?`', 'table');
 
+Copy an row with auto_increment'ing ID:
+
+    $row = $db->query('SELECT * FROM items WHERE id=?',
+                          (int)$_POST['item_id'])->fetch_row();
+    $row['id'] = 0;
+    $new_id = $db->insert('items', $row)->last_id();
+
+
 Unsorted stuff:
 
     $db->insert($table, array('st' => 'test', 'st1' => 'test'));

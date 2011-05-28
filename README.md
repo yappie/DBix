@@ -51,9 +51,9 @@ Querying and placeholders:
 Getting results:
 
     $items = $db->query($query, 'table', 'first string')->fetch_all();
-        //                 ->fetch_row()    - 1 row
-        //                 ->fetch_column() - 1 column as array
-        //                 ->fetch_cell()   - 1 item
+        //                                              ->fetch_column() - 1 column as array
+        //                                              ->fetch_row()    - 1 row   [throws DBix\Exception if none]
+        //                                              ->fetch_cell()   - 1 item  [throws DBix\Exception if none]
 
 Getting number of rows returned and affected:
 

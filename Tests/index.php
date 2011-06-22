@@ -410,6 +410,13 @@ class DbalTest extends PHPUnit_Framework_TestCase {
         $this->db->set_model_for($this->table, 'Some1');
     }
 
+    /**
+     * @depends testTableCreation
+     */
+    public function testLazyParamExecute() {
+        $q = $this->db->execute('SELECT ? as A, ? as B', '1', '2')->fetch_row();
+        $this->assertEquals(array('A' => '1', 'B' => '2'), $q);
+    }
 }
 
 class Some1 {

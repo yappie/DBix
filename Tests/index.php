@@ -373,16 +373,48 @@ class DbalTest extends PHPUnit_Framework_TestCase {
      * @depends testTableCreation
      */
     public function testChars() {
-        $src = 'тест';
+        $src = 'test-тест-のテスト';
         $id = $this->db->insert($this->table, array('st' => $src))->last_id();
         $return = $this->db->query('SELECT st FROM `?` WHERE id=?',
                                     $this->table, $id)->fetch_cell();
-        $this->assertEquals($return, $src);
+        $this->assertEquals($src, $return);
     }
 
+    /**
+     * @depends testTableCreation
+     */
+    public function testSetModelFor() {
+        $this->db->set_model_for($this->table, 'St');
+        $items = $this->db->query('SELECT * FROM `?`', $this->table)->fetch_all_active();
+        $this->assertContainsOnly('St', $items);
+
+        $this->db->set_model_for($this->table);
+        $items = $this->db->query('SELECT * FROM `?`', $this->table)->fetch_all_active();
+        $this->assertContainsOnly('DBix\Model', $items);
+
+    }
+
+    /**
+     * @depends testTableCreation
+     * @expectedException DBix\Exception
+     */
+    public function testSetModelForException1() {
+        $this->db->set_model_for($this->table, 'BadClass#$#');
+    }
+
+    /**
+     * @depends testTableCreation
+     * @expectedException DBix\Exception
+     */
+    public function testSetModelForException2() {
+        $this->db->set_model_for($this->table, 'Some1');
+    }
 
 }
 
+class Some1 {
+}
 
+class St extends DBix\Model {
 
-
+}

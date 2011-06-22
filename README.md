@@ -27,11 +27,21 @@ Create new item:
 
 ActiveRecord:
 
-    $query = 'select * from `?` where st == ?';
+    $query = 'SELECT * FROM `?` WHERE st == ?';
     $items = $db->query($query, 'table', '1')->fetch_all_active();
     $items[0]->st = 'more-updates';
     $items[0]->save();
     $items[0]->delete();
+
+ActiveRecord using your own classes:
+
+    class Table extends DBix\Model {
+    }
+    $db->set_model_for('table', Table);
+    $items = $db->query($query, 'table', '1')->fetch_all_active();
+    # items now contains 'Table' object
+    $items[0]->save();
+
 
 Enable debug:
 
@@ -54,6 +64,9 @@ Getting results:
         //                                              ->fetch_column() - 1 column as array
         //                                              ->fetch_row()    - 1 row   [throws DBix\Exception if none]
         //                                              ->fetch_cell()   - 1 item  [throws DBix\Exception if none]
+
+        //                                              ->fetch_active() - all items using ActiveRecord pattern
+        //                                              ->fetch_all_active() - 1 item using ActiveRecord pattern
 
 Getting number of rows returned and affected:
 

@@ -253,14 +253,17 @@ class Query {
     }
 
     public function last_id() {
+        $this->run();
         return $this->db->dbh->lastInsertId();
     }
 
     public function affected() {
+        $this->run();
         return $this->_affected;
     }
 
     public function num_rows() {
+        $this->run();
         return $this->_num_rows;
     }
 

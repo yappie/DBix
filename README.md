@@ -37,10 +37,12 @@ ActiveRecord using your own classes:
 
     class Table extends DBix\Model {
     }
-    $db->set_model_for('table', Table);
+    $db->set_model_for('table', 'Table');
     $items = $db->query($query, 'table', '1')->fetch_all_active();
     # items now contains 'Table' object
     $items[0]->save();
+
+    $db->set_model_for('table');  # resets the association
 
 
 Enable debug:

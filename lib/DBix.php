@@ -511,9 +511,9 @@ class Model {
 }
 
 class ActiveRecordQuery extends Query {
-    #public function __construct($query, $params = null) {
-    #    parent::__construct($query, $params);
-    #}
+
+    private $_table;
+    private $_model_class;
 
     public function extract_table() {
         $this->run();
@@ -523,17 +523,27 @@ class ActiveRecordQuery extends Query {
     }
 
     public function fetch_all_active() {
-        $this->run();
         $ret = array();
-        $this->sth->setFetchMode(\PDO::FETCH_ASSOC);
-
-        $table = $this->extract_table();
-        $model_class = $this->db->get_model_for($table);
-        while($row = $this->sth->fetch()) {
-            $m = new $model_class($this->db, $table, $row);
-            $ret []= $m;
+        while($row = $this->fetch_active()) {
+            $ret []= $row;
         }
         return $ret;
+    }
+
+    public function fetch_active() {
+        if(empty($this->_fetching_active)) {
+            $this->run();
+            $this->sth->setFetchMode(\PDO::FETCH_ASSOC);
+            $this->_table = $this->extract_table();
+            $this->_model_class = $this->db->get_model_for($this->_table);
+        }
+        $row = $this->sth->fetch();
+        if(!$row) {
+            $this->_fetching_active = false;
+            return $row;
+        }
+        $m = new $this->_model_class($this->db, $this->_table, $row);
+        return $m;
     }
 }
 

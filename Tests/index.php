@@ -388,6 +388,10 @@ class DbalTest extends PHPUnit_Framework_TestCase {
         $items = $this->db->query('SELECT * FROM `?`', $this->table)->fetch_all_active();
         $this->assertContainsOnly('St', $items);
 
+        $item = $this->db->query('SELECT * FROM `?`', $this->table)->fetch_active();
+        $this->assertContainsOnly('St', array($item));
+
+
         $this->db->set_model_for($this->table);
         $items = $this->db->query('SELECT * FROM `?`', $this->table)->fetch_all_active();
         $this->assertContainsOnly('DBix\Model', $items);

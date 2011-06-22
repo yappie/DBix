@@ -11,54 +11,29 @@
 
 namespace DBix;
 
-class PDONullEnabled extends \PDO {
-  public function quote($value, $parameter_type = \PDO::PARAM_STR ) {
-    if(is_null($value)) {
-      return "NULL";
-    }
-
-    return parent::quote($value, $parameter_type);
-  }
-}
-
-function array_repeat($needle, $times) {
-    $ret = array();
-    for ($i = 0; $i < $times; $i++) {
-        $ret []= $needle;
-    }
-    return $ret;
-}
-
-function lazy_params($params, $func_get_args) {
-    if(!is_array($params)) {
-        if (count($func_get_args) > 2) {
-            $params = array_splice($func_get_args, 1, 1000);
-        } else {
-            $params = (array)$params;
-        };
-    }
-    return $params;
-}
-
 class DBAL {
     public $dbh;
+    private $active_models;
 
     public function __construct($url) {
         $this->verbose = false;
         $this->connect($url);
+        $this->active_models = array();
+        $this->default_engine = 'MyISAM';
+        $this->table_charset = 'utf8';
     }
 
     private function connect($url) {
         $u = parse_url($url);
         if(!array_key_exists('path', $u) || !array_key_exists('host', $u))
-            throw new Exception('Please supply a valid URI');
+            throw new Exception('Please supply a valid connection URI');
 
         try {
             $db_name = substr($u['path'], 1, 1000);
-            $this->dbh = new PDONullEnabled('mysql:host='.$u['host'].';'.
-                                  'dbname='.$db_name,
-                                  $u['user'],
-                                  $u['pass']);
+            $conn_string = sprintf('mysql:host=%s;dbname=%s;charset=UTF-8', $u['host'], $db_name);
+            $this->dbh = new PDONullEnabled($conn_string, $u['user'], $u['pass']);
+
+            $this->dbh->exec("SET NAMES utf8");
             $this->dbh->exec("SET character_set_client='utf8'");
             $this->dbh->exec("SET character_set_results='utf8'");
             $this->dbh->exec("SET collation_connection='utf8_general_ci'");
@@ -81,6 +56,7 @@ class DBAL {
     }
 
     public function execute($query, $params = null) {
+        $params = lazy_params($params, func_get_args());
         return $this->query($query, $params)->run();
     }
 
@@ -169,7 +145,8 @@ class DBAL {
             $fields []= '`?` ' . $def;
         };
         $def = join(', ', $fields);
-        $query = "CREATE TABLE `?` ($def)";
+        $query = sprintf("CREATE TABLE `?` (%s) ENGINE=%s DEFAULT CHARACTER SET %s",
+            $def, $this->default_engine, $this->table_charset);
         $params = array_merge((array)$table, array_keys($schema));
         $this->execute($query, $params);
     }
@@ -234,6 +211,32 @@ class DBAL {
         return $this->dbh->quote($item);
     }
 
+    public function set_model_for($table, $class_name = null) {
+        if($class_name === null) {
+            unset($this->active_models[$table]);
+            return;
+        }
+
+        if(!class_exists($class_name)) {
+            throw new Exception(sprintf('"%s" is not a valid class', $class_name));
+        }
+
+        $class = new \ReflectionClass($class_name);
+        if(!$class->isSubclassOf('DBix\Model')) {
+            throw new Exception(sprintf('Your class %s must extend DBix\Model', $class_name));
+        }
+
+        $this->active_models[$table] = $class_name;
+    }
+
+    public function get_model_for($table) {
+        if(!array_key_exists($table, $this->active_models)) {
+            return 'DBix\Model';
+        }
+
+        return $this->active_models[$table];
+    }
+
 }
 
 class Query {
@@ -250,14 +253,17 @@ class Query {
     }
 
     public function last_id() {
+        $this->run();
         return $this->db->dbh->lastInsertId();
     }
 
     public function affected() {
+        $this->run();
         return $this->_affected;
     }
 
     public function num_rows() {
+        $this->run();
         return $this->_num_rows;
     }
 
@@ -505,9 +511,9 @@ class Model {
 }
 
 class ActiveRecordQuery extends Query {
-    #public function __construct($query, $params = null) {
-    #    parent::__construct($query, $params);
-    #}
+
+    private $_table;
+    private $_model_class;
 
     public function extract_table() {
         $this->run();
@@ -517,16 +523,60 @@ class ActiveRecordQuery extends Query {
     }
 
     public function fetch_all_active() {
-        $this->run();
         $ret = array();
-        $this->sth->setFetchMode(\PDO::FETCH_ASSOC);
-        while($row = $this->sth->fetch()) {
-            $m = 'DBix\Model';
-            $m = new $m($this->db, $this->extract_table(), $row);
-            $ret []= $m;
+        while($row = $this->fetch_active()) {
+            $ret []= $row;
         }
         return $ret;
     }
+
+    public function fetch_active() {
+        if(empty($this->_fetching_active)) {
+            $this->run();
+            $this->sth->setFetchMode(\PDO::FETCH_ASSOC);
+            $this->_table = $this->extract_table();
+            $this->_model_class = $this->db->get_model_for($this->_table);
+        }
+        $row = $this->sth->fetch();
+        if(!$row) {
+            $this->_fetching_active = false;
+            return $row;
+        }
+        $m = new $this->_model_class($this->db, $this->_table, $row);
+        return $m;
+    }
+}
+
+class Exception extends \Exception {}
+class StructureException extends Exception {}
+
+class PDONullEnabled extends \PDO {
+  public function quote($value, $parameter_type = \PDO::PARAM_STR ) {
+    if(is_null($value)) {
+      return "NULL";
+    }
+
+    return parent::quote($value, $parameter_type);
+  }
+}
+
+function array_repeat($needle, $times) {
+    $ret = array();
+    for ($i = 0; $i < $times; $i++) {
+        $ret []= $needle;
+    }
+    return $ret;
+}
+
+function lazy_params($params, $func_get_args) {
+    if(!is_array($params)) {
+        if (count($func_get_args) > 2) {
+            $params = array_splice($func_get_args, 1, 1000);
+        } else {
+            $params = (array)$params;
+        };
+    }
+    return $params;
 }
 
 function partition($string, $cut_at) {
@@ -538,5 +588,3 @@ function partition($string, $cut_at) {
                  strlen($string)-$pos));
 }
 
-class Exception extends \Exception {}
-class StructureException extends Exception {}
